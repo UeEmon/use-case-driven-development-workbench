@@ -1,0 +1,36 @@
+name: ユースケース
+description: 新しいユースケースを追加・変更する
+title: "UC-XXX: "
+labels: ["usecase"]
+body:
+  - type: input
+    id: actor
+    attributes:
+      label: 主アクター
+      placeholder: 会員
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: 目的（アクターが達成したいこと）
+    validations:
+      required: true
+  - type: textarea
+    id: basic
+    attributes:
+      label: 基本コース（下書き）
+      placeholder: |
+        1. 会員は「検索画面」で…
+        2. システムは…
+  - type: checkboxes
+    id: progress
+    attributes:
+      label: 進捗
+      options:
+        - label: ユースケース記述（基本・代替コース）
+        - label: ロバストネス図（PDR）
+        - label: シーケンス図（CDR）
+        - label: ドメインモデル更新
+        - label: 受け入れテスト（.feature）
+        - label: 実装

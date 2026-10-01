@@ -1,0 +1,35 @@
+# ユースケース駆動開発 環境
+#   docs     : MkDocs Material（ユースケース・モデルのWeb閲覧, ライブリロード）
+#   plantuml : PlantUML Server（ユースケース図/ロバストネス図/シーケンス図/クラス図）
+#   drawio   : draw.io（GUIで画面モック・補助図を描く）
+services:
+  plantuml:
+    image: plantuml/plantuml-server:jetty
+    container_name: ucdd-plantuml
+    restart: unless-stopped
+    ports:
+      - "${PLANTUML_PORT:-8080}:8080"
+
+  drawio:
+    image: jgraph/drawio:latest
+    container_name: ucdd-drawio
+    restart: unless-stopped
+    ports:
+      - "${DRAWIO_PORT:-8081}:8080"
+
+  docs:
+    build:
+      context: .
+      dockerfile: docker/docs/Dockerfile
+    container_name: ucdd-docs
+    restart: unless-stopped
+    depends_on:
+      - plantuml
+    environment:
+      PLANTUML_SERVER: http://plantuml:8080
+    volumes:
+      - ./:/work
+    working_dir: /work
+    ports:
+      - "${DOCS_PORT:-8000}:8000"
+    command: ["mkdocs", "serve", "-a", "0.0.0.0:8000", "--watch", "docs"]

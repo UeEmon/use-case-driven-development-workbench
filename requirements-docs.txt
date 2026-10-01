@@ -1,0 +1,5 @@
+# MkDocs 2.0 はプラグイン/テーマ互換性がないため 1.x に固定
+mkdocs>=1.6,<2
+mkdocs-material>=9.7,<10
+plantuml-markdown>=3.11
+pyyaml>=6

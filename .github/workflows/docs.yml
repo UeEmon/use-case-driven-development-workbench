@@ -1,0 +1,62 @@
+name: docs
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      plantuml:
+        image: plantuml/plantuml-server:jetty
+        ports: ["8080:8080"]
+    env:
+      PLANTUML_SERVER: http://localhost:8080
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-docs.txt
+
+      - name: ユースケース整合性チェック
+        run: python scripts/check_usecases.py --write
+
+      - name: PlantUML Server の起動待ち
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8080/ > /dev/null && exit 0
+            sleep 2
+          done
+          exit 1
+
+      - name: サイトをビルド
+        run: mkdocs build --strict
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: site
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

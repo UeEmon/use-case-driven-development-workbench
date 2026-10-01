@@ -1,0 +1,55 @@
+site_name: Use Case Driven Development Workbench
+site_description: ユースケース・ロバストネス分析・シーケンス図・ドメインモデルを一元管理する
+repo_url: https://github.com/UeEmon/use-case-driven-development-workbench
+edit_uri: edit/main/docs/
+docs_dir: docs
+
+theme:
+  name: material
+  language: ja
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - content.action.edit
+    - search.highlight
+  palette:
+    - scheme: default
+      toggle: { icon: material/brightness-7, name: ダークモード }
+    - scheme: slate
+      toggle: { icon: material/brightness-4, name: ライトモード }
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  # ```plantuml ブロックを PlantUML Server でSVG化してページに埋め込む
+  - plantuml_markdown:
+      server: !ENV [PLANTUML_SERVER, "http://localhost:8080"]
+      format: svg_inline
+
+plugins:
+  - search:
+      lang: ja
+
+nav:
+  - ホーム: index.md
+  - 開発プロセス: process.md
+  - 要求:
+      - 用語集: requirements/glossary.md
+      - アクター: requirements/actors.md
+  - ドメインモデル: domain/domain-model.md
+  - ユースケース:
+      - usecases/index.md
+      - UC-001 書籍を検索する: usecases/UC-001-search-books.md
+      - UC-002 書籍を貸し出す: usecases/UC-002-lend-book.md
+  - トレーサビリティ: traceability.md
+  - テンプレート:
+      - ユースケース: guide/usecase-template.md
