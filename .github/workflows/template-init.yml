@@ -1,0 +1,47 @@
+name: template-init
+
+# テンプレートから作成したリポジトリで最初に一度だけ動き、
+# 元リポジトリの URL を新しいリポジトリのものに書き換える。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  init:
+    if: github.repository != 'UeEmon/use-case-driven-development-workbench'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: URL を書き換え
+        id: rewrite
+        env:
+          OLD_REPO: UeEmon/use-case-driven-development-workbench
+          OLD_PAGES: https://ueemon.github.io/use-case-driven-development-workbench
+          NEW_REPO: ${{ github.repository }}
+        run: |
+          files=$(grep -rlF "${OLD_REPO#*/}" --exclude-dir=.git --exclude-dir=.github . || true)
+          if [ -z "$files" ]; then
+            echo "書き換え済みのため何もしません"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          owner_lc=$(echo "${NEW_REPO%%/*}" | tr '[:upper:]' '[:lower:]')
+          new_pages="https://${owner_lc}.github.io/${NEW_REPO#*/}"
+          for f in $files; do
+            sed -i "s#${OLD_PAGES}#${new_pages}#g; s#${OLD_REPO}#${NEW_REPO}#g; s#use-case-driven-development-workbench#${NEW_REPO#*/}#g" "$f"
+          done
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "$files"
+
+      - name: コミット
+        if: steps.rewrite.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898+github-actions[bot]@users.noreply.github.com"
+          git commit -am "テンプレートの URL をこのリポジトリ用に書き換え"
+          git push

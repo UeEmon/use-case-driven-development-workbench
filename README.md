@@ -50,6 +50,13 @@ scripts/          整合性チェック
 docker/docs/      ドキュメントサーバのイメージ
 ```
 
+## このテンプレートから新しいリポジトリを作る
+
+1. GitHub の **Use this template → Create a new repository** で作成する。
+2. 作成直後に `template-init` ワークフローが動き、README・`mkdocs.yml`・CLAUDE.md などの URL を新しいリポジトリ用に書き換えてコミットする（Actions タブで確認）。
+3. 新しいリポジトリで **Settings → Pages → Source** を「GitHub Actions」にし、`docs` ワークフローを再実行する。
+4. サンプル（UC-001 / UC-002、用語集、ドメインモデル）を自分の題材に置き換える。
+
 ## GitHub の初期設定
 
 1. （設定済み）`mkdocs.yml` の `repo_url` はこのリポジトリを指しています。
