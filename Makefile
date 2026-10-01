@@ -2,9 +2,11 @@
 -include .env
 export
 DC := docker compose
+# Tailscale の CLI（PATH に無ければ Mac アプリ同梱のものを使う）
+TAILSCALE := $(shell command -v tailscale 2>/dev/null || echo /Applications/Tailscale.app/Contents/MacOS/Tailscale)
 
 help: ## コマンド一覧
-	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-8s %s\n", $$1, $$2}'
+	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-10s %s\n", $$1, $$2}'
 
 up: ## 環境を起動（docs:8000 / plantuml:8080 / drawio:8081）
 	$(DC) up -d --build
@@ -17,8 +19,26 @@ up-lite: ## draw.io なしで起動（docs:8000 / plantuml:8080）
 	@echo "docs     http://localhost:$${DOCS_PORT:-8000}"
 	@echo "plantuml http://localhost:$${PLANTUML_PORT:-8080}"
 
-down: ## 環境を停止
-	$(DC) down
+down: ## 環境を停止（トンネルも含む）
+	$(DC) --profile tunnel down
+
+tunnel: ## Cloudflare Tunnel を起動（.env に CLOUDFLARE_TUNNEL_TOKEN が必要）
+	@test -n "$(CLOUDFLARE_TUNNEL_TOKEN)" || (echo ".env に CLOUDFLARE_TUNNEL_TOKEN を設定してください（docs/guide/remote-access.md）" && exit 1)
+	$(DC) --profile tunnel up -d --build
+	@echo "トンネル状態: docker compose logs -f cloudflared"
+
+remote: ## Tailscale Serve で docs を tailnet に HTTPS 公開（Tailscale が必要）
+	$(TAILSCALE) serve --https=443 --bg localhost:$${DOCS_PORT:-8000}
+	$(TAILSCALE) serve status
+
+remote-all: ## Tailscale Serve で docs / plantuml / draw.io をすべて公開
+	$(TAILSCALE) serve --https=443 --bg localhost:$${DOCS_PORT:-8000}
+	$(TAILSCALE) serve --https=8443 --bg localhost:$${PLANTUML_PORT:-8080}
+	$(TAILSCALE) serve --https=10000 --bg localhost:$${DRAWIO_PORT:-8081}
+	$(TAILSCALE) serve status
+
+remote-off: ## Tailscale Serve の公開をすべて止める
+	$(TAILSCALE) serve reset
 
 logs: ## ログを表示
 	$(DC) logs -f docs
@@ -38,4 +58,4 @@ new: ## 新しいユースケースを作成（例: make new ID=UC-003 SLUG=retu
 	printf '@$(ID)\nFeature: $(ID)\n' > tests/acceptance/$(ID).feature
 	@echo "作成しました。mkdocs.yml の nav に docs/usecases/$(ID)-$(SLUG).md を追加してください"
 
-.PHONY: help up up-lite down logs check trace build new
+.PHONY: help up up-lite down tunnel remote remote-all remote-off logs check trace build new

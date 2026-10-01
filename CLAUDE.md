@@ -35,6 +35,7 @@
 ## コマンド
 
 - `make up` / `make down`: Docker で docs(:8000)・PlantUML(:8080)・draw.io(:8081) を起動／停止
+- `make remote` / `make remote-off`: Tailscale Serve で tailnet に公開／停止。`make tunnel`: Cloudflare Tunnel（`.env` にトークン）
 - `make check`: 整合性チェック（CI でも実行）
 - `make build`: `mkdocs build --strict`
 - Docker が使えない環境では `pip install -r requirements-docs.txt` 後に
@@ -43,4 +44,5 @@
 ## 注意
 
 - MkDocs は 1.x に固定（2.0 はプラグイン非互換）。`requirements-docs.txt` を勝手に上げない。
+- サービスには認証がないため、ポートは `127.0.0.1` にだけ公開する。ルーターのポート開放を案内しない（外部公開は Tailscale か Cloudflare Access 経由）。
 - `docs/templates/` という名前のフォルダは MkDocs が自動で除外するので使わない。

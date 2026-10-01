@@ -124,6 +124,13 @@ make down      # 停止
 - エディタは何でもかまいません。[Visual Studio Code](https://code.visualstudio.com/) を使う場合は、拡張機能 **PlantUML**（jebbs）を入れ、設定の `plantuml.server` に `http://localhost:8080` を指定すると、エディタ内でも図のプレビューができます。
 - Mac を再起動した後は、Docker Desktop を起動してから `make up` を実行します（`restart: unless-stopped` のため、Docker Desktop の起動だけで自動的に立ち上がることもあります）。
 
+### 他の端末から見たいとき
+
+ポートは既定で **この Mac からだけ** 接続できる設定（`.env` の `BIND_ADDRESS=127.0.0.1`）です。
+
+- 同じ Wi-Fi の別の PC から見る場合は `BIND_ADDRESS=0.0.0.0` にして `make up`（認証がないため自宅 LAN 内に限ってください）。
+- 外出先から見る場合は、ポート開放ではなく [外出先からアクセスする](remote-access.md) の方法を使います。
+
 ## 6. 更新とアンインストール
 
 ```bash

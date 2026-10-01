@@ -21,7 +21,7 @@ cp .env.example .env          # ポートを変える場合のみ編集
 make up                       # = docker compose up -d --build
 ```
 
-Mac への Docker Desktop の導入から説明した手順は [docs/guide/docker-desktop-mac.md](docs/guide/docker-desktop-mac.md) にあります。
+Mac への Docker Desktop の導入から説明した手順は [docs/guide/docker-desktop-mac.md](docs/guide/docker-desktop-mac.md)、外出先から自宅の Mac に接続する方法は [docs/guide/remote-access.md](docs/guide/remote-access.md) にあります。
 
 http://localhost:8000 を開くとサンプル（図書館システムの UC-001 / UC-002）が表示されます。
 

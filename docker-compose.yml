@@ -1,21 +1,25 @@
 # ユースケース駆動開発 環境
-#   docs     : MkDocs Material（ユースケース・モデルのWeb閲覧, ライブリロード）
-#   plantuml : PlantUML Server（ユースケース図/ロバストネス図/シーケンス図/クラス図）
-#   drawio   : draw.io（GUIで画面モック・補助図を描く）
+#   docs        : MkDocs Material（ユースケース・モデルのWeb閲覧, ライブリロード）
+#   plantuml    : PlantUML Server（ユースケース図/ロバストネス図/シーケンス図/クラス図）
+#   drawio      : draw.io（GUIで画面モック・補助図を描く）
+#   cloudflared : Cloudflare Tunnel（任意。`make tunnel` のときだけ起動）
+#
+# どのサービスも認証機能を持たないため、ポートは既定で Mac 本体（127.0.0.1）にだけ公開する。
+# 外出先からの接続は docs/guide/remote-access.md の方法（Tailscale / Cloudflare Tunnel）で行う。
 services:
   plantuml:
     image: plantuml/plantuml-server:jetty
     container_name: ucdd-plantuml
     restart: unless-stopped
     ports:
-      - "${PLANTUML_PORT:-8080}:8080"
+      - "${BIND_ADDRESS:-127.0.0.1}:${PLANTUML_PORT:-8080}:8080"
 
   drawio:
     image: jgraph/drawio:latest
     container_name: ucdd-drawio
     restart: unless-stopped
     ports:
-      - "${DRAWIO_PORT:-8081}:8080"
+      - "${BIND_ADDRESS:-127.0.0.1}:${DRAWIO_PORT:-8081}:8080"
 
   docs:
     build:
@@ -31,5 +35,16 @@ services:
       - ./:/work
     working_dir: /work
     ports:
-      - "${DOCS_PORT:-8000}:8000"
+      - "${BIND_ADDRESS:-127.0.0.1}:${DOCS_PORT:-8000}:8000"
     command: ["mkdocs", "serve", "-a", "0.0.0.0:8000", "--watch", "docs"]
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: ucdd-cloudflared
+    restart: unless-stopped
+    profiles: ["tunnel"]
+    depends_on:
+      - docs
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}

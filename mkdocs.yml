@@ -53,4 +53,5 @@ nav:
   - トレーサビリティ: traceability.md
   - ガイド:
       - Docker Desktop への展開（Intel Mac）: guide/docker-desktop-mac.md
+      - 外出先からアクセスする: guide/remote-access.md
       - ユースケースのテンプレート: guide/usecase-template.md
