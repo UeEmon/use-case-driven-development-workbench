@@ -1,4 +1,6 @@
 .DEFAULT_GOAL := help
+-include .env
+export
 DC := docker compose
 
 help: ## コマンド一覧
@@ -9,6 +11,11 @@ up: ## 環境を起動（docs:8000 / plantuml:8080 / drawio:8081）
 	@echo "docs     http://localhost:$${DOCS_PORT:-8000}"
 	@echo "plantuml http://localhost:$${PLANTUML_PORT:-8080}"
 	@echo "draw.io  http://localhost:$${DRAWIO_PORT:-8081}"
+
+up-lite: ## draw.io なしで起動（docs:8000 / plantuml:8080）
+	$(DC) up -d --build docs plantuml
+	@echo "docs     http://localhost:$${DOCS_PORT:-8000}"
+	@echo "plantuml http://localhost:$${PLANTUML_PORT:-8080}"
 
 down: ## 環境を停止
 	$(DC) down
@@ -31,4 +38,4 @@ new: ## 新しいユースケースを作成（例: make new ID=UC-003 SLUG=retu
 	printf '@$(ID)\nFeature: $(ID)\n' > tests/acceptance/$(ID).feature
 	@echo "作成しました。mkdocs.yml の nav に docs/usecases/$(ID)-$(SLUG).md を追加してください"
 
-.PHONY: help up down logs check trace build new
+.PHONY: help up up-lite down logs check trace build new

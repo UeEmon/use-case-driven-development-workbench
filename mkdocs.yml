@@ -51,5 +51,6 @@ nav:
       - UC-001 書籍を検索する: usecases/UC-001-search-books.md
       - UC-002 書籍を貸し出す: usecases/UC-002-lend-book.md
   - トレーサビリティ: traceability.md
-  - テンプレート:
-      - ユースケース: guide/usecase-template.md
+  - ガイド:
+      - Docker Desktop への展開（Intel Mac）: guide/docker-desktop-mac.md
+      - ユースケースのテンプレート: guide/usecase-template.md
