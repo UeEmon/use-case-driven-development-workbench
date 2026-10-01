@@ -1,4 +1,4 @@
-site_name: Use Case Driven Development Workbench
+site_name: 運航管理システム - Use Case Driven Development Workbench
 site_description: ユースケース・ロバストネス分析・シーケンス図・ドメインモデルを一元管理する
 repo_url: https://github.com/UeEmon/use-case-driven-development-workbench
 edit_uri: edit/main/docs/
@@ -48,8 +48,9 @@ nav:
   - ドメインモデル: domain/domain-model.md
   - ユースケース:
       - usecases/index.md
-      - UC-001 書籍を検索する: usecases/UC-001-search-books.md
-      - UC-002 書籍を貸し出す: usecases/UC-002-lend-book.md
+      - UC-001 運航便を登録する: usecases/UC-001-register-flight.md
+      - UC-002 機材を割り当てる: usecases/UC-002-assign-aircraft.md
+      - UC-003 整備記録を登録する: usecases/UC-003-register-maintenance-record.md
   - トレーサビリティ: traceability.md
   - テンプレート:
       - ユースケース: guide/usecase-template.md

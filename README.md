@@ -21,7 +21,7 @@ cp .env.example .env          # ポートを変える場合のみ編集
 make up                       # = docker compose up -d --build
 ```
 
-http://localhost:8000 を開くとサンプル（図書館システムの UC-001 / UC-002）が表示されます。
+http://localhost:8000 を開くと航空機の運航管理システム（UC-001〜UC-003）が表示されます。
 
 `make` が使えない環境では `docker compose up -d --build` で起動し、チェックは
 `docker compose run --rm --no-deps docs python scripts/check_usecases.py` で実行できます。

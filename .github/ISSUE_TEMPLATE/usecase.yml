@@ -7,7 +7,7 @@ body:
     id: actor
     attributes:
       label: 主アクター
-      placeholder: 会員
+      placeholder: 運航管理者
     validations:
       required: true
   - type: textarea
@@ -21,7 +21,7 @@ body:
     attributes:
       label: 基本コース（下書き）
       placeholder: |
-        1. 会員は「検索画面」で…
+        1. 運航管理者は「運航便一覧画面」で…
         2. システムは…
   - type: checkboxes
     id: progress
