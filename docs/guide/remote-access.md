@@ -16,7 +16,7 @@
 | 必要なもの | Tailscale アカウント（Google / GitHub 等でログイン） | Cloudflare アカウント**と、Cloudflare に登録した独自ドメイン** |
 | 費用 | 個人利用は無料（6 ユーザーまで、端末数無制限） | 無料枠あり（ドメイン代は別） |
 | 向いている使い方 | 自分の PC・スマホから見る | チームの人やアプリを入れられない端末から見る |
-| 手間 | 10 分程度 | 30 分程度 |
+| 手間 | 10 分程度 | 初回 30 分程度（ドメイン準備を除く。設定は `make cloudflare-setup` で自動化） |
 
 自分で使うだけなら **A. Tailscale** を選んでください。
 
@@ -129,65 +129,101 @@ T --> D
 
 cloudflared は自宅から Cloudflare へ**外向き**に接続するため、ルーターの設定変更やポート開放は不要です。
 
-### B-1. 先にアクセス制限（Access）を作る
+### B-1. ドメインと Zero Trust を用意する（初回のみ・画面操作）
 
-トンネルを公開する**前に**、認証を設定しておきます（逆の順序だと、設定するまでの間だれでも見られる状態になります）。
+1. [Cloudflare](https://dash.cloudflare.com/sign-up) のアカウントを作る。
+2. ドメインを用意する。
+    - 持っていない場合: ダッシュボードの **Domain Registration → Register Domains** で購入する（.com は年 $10 程度）。購入したドメインは自動で Cloudflare に登録されます。
+    - 他社で取得済みの場合: **Add a domain** で追加し、表示される 2 つのネームサーバーを取得元の管理画面で設定する（反映まで数時間かかることがあります）。
+3. ダッシュボードの **Zero Trust** を開き、チーム名を決めて **Free プラン**を選ぶ（0 ドルですが、支払い方法の登録を求められる場合があります）。
 
-1. [Cloudflare ダッシュボード](https://dash.cloudflare.com/) で **Zero Trust** を開く（初回はチーム名の設定と、無料プランの選択を求められます）。
-2. **Access → Applications → Add an application → Self-hosted** を選ぶ。
-3. 次のように設定する。
-    - Application name: `UCDD Workbench`
-    - Public hostname: サブドメイン `ucdd`、ドメイン `example.com`（自分のドメイン）
-    - Session duration: `24 hours` など
-4. **Policy** を追加する。
-    - Action: **Allow**
-    - Include → **Emails**: 閲覧を許可する人のメールアドレス（自分のアドレスなど）
-5. ログイン方法は **One-time PIN** を有効にする（メールに届く 6 桁のコードでログインする方式で、追加設定は不要です）。
-6. 保存する。
+### B-2. API トークンを作る（初回のみ）
 
-### B-2. トンネルを作り、トークンを取得する
+自動設定スクリプトが Cloudflare を操作するための鍵を作ります。
 
-1. ダッシュボードの **Networks → Tunnels → Create a tunnel** を選ぶ（種類は **Cloudflared**）。
-2. 名前を付ける（例: `home-mac-ucdd`）。
-3. インストール方法で **Docker** を選ぶと、`docker run cloudflare/cloudflared:latest tunnel ... run --token eyJ...` というコマンドが表示されます。
-   この `--token` の後ろの長い文字列（`eyJ` で始まる）だけをコピーします。**コマンドは実行しません**（ワークベンチの Compose で起動するため）。
-4. 次の画面の **Public hostname（Published application）** で次のように設定する。
-    - Subdomain: `ucdd`、Domain: `example.com`（B-1 と同じ）
-    - Service: Type **HTTP**、URL **`docs:8000`**
+1. [API Tokens](https://dash.cloudflare.com/profile/api-tokens) → **Create Token** → **Custom token** の **Get started** を選ぶ。
+2. 名前を `ucdd-setup` とし、**Permissions** を次の 5 行にする。
 
-    `localhost:8000` ではなく `docs:8000` と指定するのがポイントです（cloudflared は Compose の中から docs コンテナに直接つなぎます）。
+    | 種類 | 項目 | 権限 |
+    |---|---|---|
+    | Account | Cloudflare Tunnel | Edit |
+    | Account | Access: Apps and Policies | Edit |
+    | Account | Access: Organizations, Identity Providers, and Groups | Edit |
+    | Zone | DNS | Edit |
+    | Zone | Zone | Read |
 
-### B-3. Mac でトンネルを起動する
+3. **Account Resources** は自分のアカウント、**Zone Resources** は **Specific zone** で使うドメインだけにする。
+4. **TTL** に 1 日後の日付を入れておくと、使い終わったトークンが自動で無効になり安全です。
+5. **Continue to summary → Create Token** を押し、表示されたトークンをコピーする（この画面でしか表示されません）。
 
-リポジトリの `.env` にトークンを書きます（`.env` は Git の管理対象外なので、コミットされません）。
+### B-3. 自動設定を実行する
+
+Docker Desktop を起動した状態で、リポジトリのフォルダで実行します。
 
 ```bash
 cd ~/dev/use-case-driven-development-workbench
-open -e .env    # テキストエディットで開く
+make cloudflare-setup
 ```
 
-```dotenv
-CLOUDFLARE_TUNNEL_TOKEN=eyJhIjoi...（コピーしたトークン）
+順に聞かれるので入力します。
+
+```
+Cloudflare API トークン（入力は表示されません）: （B-2 でコピーしたトークンを貼り付けて Enter）
+Cloudflare に登録済みのドメイン（例: example.com）: example.com
+公開に使うサブドメイン [ucdd]: （そのまま Enter）
+閲覧を許可するメールアドレス（カンマ区切り）: me@example.org
 ```
 
-保存したら起動します。
+スクリプトは次の順で設定し、最後に `.env` へトンネルのトークンを保存します。
+**認証（Access）を先に作ってから**トンネルと DNS を作るので、認証なしで公開される時間はありません。
+
+```
+[1/5] ドメインを確認
+[2/5] Access（認証）を設定   … One-time PIN ログイン・許可メールのポリシー・アプリ
+[3/5] トンネルを用意         … home-mac-ucdd、ucdd.example.com → docs コンテナ
+[4/5] DNS を設定             … ucdd.example.com → トンネル
+[5/5] .env にトンネルのトークンを保存
+```
+
+- 何度実行しても同じ結果になります。許可するメールアドレスを変えたいときは、もう一度実行して入力し直します。
+- 実際には変更せず、何をするかだけ確認したい場合は `make cloudflare-setup ARGS=--dry-run` を使います。
+- API トークンはどこにも保存されません。終わったら API Tokens 画面で削除してかまいません（次回変更するときに作り直します）。
+
+### B-4. トンネルを起動して開く
 
 ```bash
 make tunnel
 docker compose logs -f cloudflared   # "Registered tunnel connection" が出れば接続完了（Ctrl+C で抜ける）
 ```
 
-### B-4. 外出先から開く
-
-1. ブラウザで `https://ucdd.example.com` を開く。
-2. Cloudflare のログイン画面でメールアドレスを入力し、届いたコードを入力する。
+1. 外出先のブラウザで `https://ucdd.example.com`（自分のドメイン）を開く。
+2. メールアドレスを入力し、届いた 6 桁のコードを入力する。
 3. ワークベンチが表示される。
 
-許可していないメールアドレスではコードが届かず、ページは表示されません。止めるときは `make down`（トンネルも止まります）。
+許可していないメールアドレスにはコードが届かず、ページは表示されません。止めるときは `make down`（トンネルも止まります）。
+
+### B-5. やめるとき
+
+Cloudflare に作った設定（トンネル・DNS・Access）をすべて削除します。
+
+```bash
+make down
+make cloudflare-setup ARGS=--delete
+```
+
+??? note "スクリプトを使わず画面で設定する場合"
+    1. **Zero Trust → Settings → Authentication** で **One-time PIN** を追加する。
+    2. **Access → Applications → Add an application → Self-hosted** で、ホスト名 `ucdd.example.com`、
+       Policy は Action **Allow**・Include **Emails** に許可するメールアドレスを設定する。**必ずトンネルより先に作る。**
+    3. **Networks → Tunnels → Create a tunnel**（Cloudflared）で `home-mac-ucdd` を作り、Docker 用コマンドの
+       `--token` の後ろの文字列（`eyJ`…）だけをコピーする（コマンドは実行しない）。
+    4. 同じ画面の Public hostname で `ucdd.example.com` → Service **HTTP** / **`docs:8000`** を設定する
+       （`localhost:8000` ではない点に注意）。
+    5. `.env` に `CLOUDFLARE_TUNNEL_TOKEN=eyJ…` を書き、`make tunnel` を実行する。
 
 !!! warning "トークンの扱い"
     トンネルのトークンは、自分のドメインにサーバをつなぐための鍵です。チャットやリポジトリに貼らないでください。
-    漏れた場合は、ダッシュボードでトンネルを削除して作り直します。
+    漏れた場合は `make cloudflare-setup ARGS=--delete` で削除してから、もう一度 `make cloudflare-setup` を実行します。
 
 ---
 
@@ -225,6 +261,9 @@ caffeinate -s
 | ts.net の URL を開くと「サイトにアクセスできません」 | 見る側の端末で Tailscale がオフになっている。アプリで Connected にする |
 | ts.net の URL がタイムアウトする | 自宅の Mac がスリープ中か、Docker が止まっている。帰宅後に設定を見直す |
 | `make remote` で HTTPS を有効にするよう求められ続ける | 表示された URL を開いて Enable したか確認。管理画面 **DNS** で MagicDNS と HTTPS Certificates がオンか確認 |
+| `make cloudflare-setup` で `Authentication error` | API トークンの権限が足りない。B-2 の 5 行がすべて入っているか、Zone Resources に対象ドメインが含まれているか確認 |
+| `make cloudflare-setup` で「Zero Trust の初期設定が済んでいない」 | B-1 の 3 を行う |
+| `make cloudflare-setup` で「既に使われています」 | そのサブドメインに別の DNS レコードがある。別のサブドメインを入力するか、置き換えてよければ `ARGS=--force` |
 | Cloudflare で `502 Bad Gateway` | Service URL が `docs:8000` になっているか、`make tunnel` で docs も起動しているかを確認 |
-| Cloudflare のログイン画面が出ずにそのまま表示される | Access アプリのホスト名とトンネルのホスト名が一致していない。B-1 を見直す（危険なので先に `make down`） |
+| Cloudflare のログイン画面が出ずにそのまま表示される | 認証がかかっていない。すぐに `make down` し、`make cloudflare-setup` を再実行する |
 | ページは出るが保存しても自動更新されない | 自動更新は WebSocket を使う。ブラウザを再読み込みすれば最新が表示される |

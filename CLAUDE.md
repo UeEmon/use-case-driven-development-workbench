@@ -35,7 +35,7 @@
 ## コマンド
 
 - `make up` / `make down`: Docker で docs(:8000)・PlantUML(:8080)・draw.io(:8081) を起動／停止
-- `make remote` / `make remote-off`: Tailscale Serve で tailnet に公開／停止。`make tunnel`: Cloudflare Tunnel（`.env` にトークン）
+- `make remote` / `make remote-off`: Tailscale Serve で tailnet に公開／停止。`make cloudflare-setup` → `make tunnel`: Cloudflare Tunnel + Access（API で自動設定、Access を先に作る）
 - `make check`: 整合性チェック（CI でも実行）
 - `make build`: `mkdocs build --strict`
 - Docker が使えない環境では `pip install -r requirements-docs.txt` 後に
